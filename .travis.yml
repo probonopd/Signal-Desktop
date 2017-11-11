@@ -1,26 +1,27 @@
 language: node_js
-node_js:
-  - 'node'
-os:
-  - linux
 dist: trusty
+os: linux
+node_js: 'node'
+
+env:
+  global:
+    - SIGNAL_ENV: production
+
 install:
   - yarn install
+  
 script:
   - yarn run generate
   - yarn prepare-build
   - ./node_modules/.bin/build --em.environment=$SIGNAL_ENV --config.mac.bundleVersion='$TRAVIS_BUILD_NUMBER' --publish=never --linux=AppImage
-  - find . | grep AppImage
-  - ./travis.sh
-env:
-  global:
-    - SIGNAL_ENV: production
-    - #secure: LeXDynRSyeHXR9KdmhYuP/zsc8uFsnYoOWI3fqg8x5SLOilfDyQ766idkT9NTRrdSR8WY7wP4DPs3hrBWGmcVq7BhytI9Q34YSgGS/Sds0jlm5AzSpYfAHpSQ+9ufQXNKN6lgxTkupdsWlc2Em20wUd5EfluDSOoeWVMlqHmKrw=
-    - #secure: WzXjaiy6BmEyKI3uXeanjbAlmzadlwIWxJbC7Mff2duIl/nsaOTK6ElYu23IfeBCvK1DxXV8DVUfTIZXkeFeqHKPtgq2t3HcS12YiNnb7ToGpgOpzElYY4wAOPxRbqPE/ZcthbSxo1x/thgDeWNWxqK1X4XJ3qEIRoE+tPsGKG8=
-sudo: false
-notifications:
-  email: false
-addons:
-  artifacts:
-    paths:
-      - $(ls ./dist/*.* | tr "\n" ":")
+
+after_success:
+  - find ./appdir -executable -type f -exec ldd {} \; | grep " => /usr" | cut -d " " -f 2-3 | sort | uniq
+  - # curl --upload-file ./APPNAME*.AppImage https://transfer.sh/APPNAME-git.$(git rev-parse --short HEAD)-x86_64.AppImage
+  - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+  - bash upload.sh ./dist/signal-desktop-*.AppImage*
+  
+branches:
+  except:
+    - # Do not build tags that we create when we upload to GitHub Releases
+    - /^(?i:continuous)$/
