@@ -111,6 +111,7 @@
       },
       "asarUnpack": "node_modules/spellchecker/vendor/hunspell_dictionaries",
       "target": [
+        "AppImage",
         "deb",
         "zip"
       ],
